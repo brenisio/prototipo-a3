@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Protótipo navegável da A3 de Engenharia de Usabilidade (UFSC, Grupo F): redesenho do registro de refeições.">
+<meta name="theme-color" content="#f6f5ef">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Protótipo A3">
+<title>Protótipo A3 · Grupo F</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+html { box-sizing: border-box; height: 100%; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); -webkit-text-size-adjust: 100%; }
+body { margin: 0; height: 100%; font-size: 14px; -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+/* Layout: painel de avaliação à esquerda, celular no centro (desktop); no celular, o app ocupa a tela e o painel vira folha. */
+:root {
+  --page: #e9ece4; --page-fg: #1f2620; --panel: #f8f9f4; --muted: #5f695f; --line: #d3d8cc; --accent: #2a7350; --accent-fg: #ffffff;
+  --bezel: #1b211d;
+  --f-disp: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  /* app (visual fixo e claro, de propósito: é a tela do aplicativo) */
+  --a-bg: #f6f5ef; --a-card: #ffffff; --a-ink: #1c241f; --a-sub: #677068; --a-line: #e3e3da;
+  --a-green: #2a7350; --a-green-soft: #e1efe5; --a-coral: #cf5a39; --a-coral-soft: #fbe6de;
+  --a-gem: #4b56cf; --a-gem-soft: #e7e9fb; --a-tour: #0e6973; --a-dim: rgba(16, 24, 19, .64);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #141815; --page-fg: #e6eae3; --panel: #1b201c; --muted: #a2aca2; --line: #2f3730; --accent: #6cc196; --accent-fg: #0f1a13; --bezel: #050706; color-scheme: dark } }
+:root[data-theme="dark"] { --page: #141815; --page-fg: #e6eae3; --panel: #1b201c; --muted: #a2aca2; --line: #2f3730; --accent: #6cc196; --accent-fg: #0f1a13; --bezel: #050706; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--page); color: var(--page-fg); font-family: var(--f-body); font-size: 15px; }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--a-tour); outline-offset: 2px; }
+
+.layout { height: 100%; display: grid; grid-template-columns: minmax(300px, 400px) auto; justify-content: center; align-items: center; gap: 48px;
+  padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.topo { display: none; }
+
+/* ---------- painel ---------- */
+.painel { max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding-right: 4px; }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.painel h1 { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 34px; line-height: 1.05; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); line-height: 1.5; }
+.painel h2 { margin: 4px 0 0; font-family: var(--f-disp); font-size: 18px; font-weight: 700; }
+.tarefas { display: grid; gap: 8px; }
+.tarefa { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.tarefa .cod { font-family: var(--f-disp); font-weight: 800; font-size: 18px; color: var(--accent); }
+.tarefa b { display: block; font-weight: 600; }
+.tarefa small { display: block; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+.btn-p { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 13px; }
+.btn-p.forte { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.rodando { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 12px; background: var(--accent); color: var(--accent-fg); }
+.rodando .t { font-variant-numeric: tabular-nums; font-weight: 700; flex: 1; min-width: 0; }
+.rodando .btn-p { border-color: currentColor; color: inherit; }
+.res { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.res th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.res td { padding: 7px 4px; border-bottom: 1px solid var(--line); }
+.res .vazio { color: var(--muted); padding: 10px 4px; }
+.linha-bt { display: flex; gap: 8px; flex-wrap: wrap; }
+#res-txt { width: 100%; min-height: 90px; font: 12px/1.4 ui-monospace, monospace; background: var(--panel); color: var(--page-fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.fechar-painel { display: none; }
+.nota { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.45; }
+
+/* ---------- celular ---------- */
+.celular { position: relative; height: min(844px, calc(100dvh - 40px)); aspect-ratio: 390 / 844; max-width: 100%; background: var(--bezel); border-radius: 48px; padding: 11px; display: flex; flex-direction: column; box-shadow: 0 30px 60px -30px rgba(0,0,0,.45); }
+.status { height: 34px; flex: none; background: var(--a-bg); border-radius: 38px 38px 0 0; display: flex; justify-content: space-between; align-items: center; padding: 0 28px; font: 600 13px var(--f-body); color: var(--a-ink); }
+.tela { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--a-bg); color: var(--a-ink); border-radius: 0 0 38px 38px; font-family: var(--f-body); }
+
+/* ---------- app ---------- */
+.scr { position: absolute; inset: 0; overflow-y: auto; padding: 8px 18px 24px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
+.scr::-webkit-scrollbar { display: none; }
+.h { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 30px; letter-spacing: -.01em; }
+.sub { margin: -8px 0 0; color: var(--a-sub); }
+.passos { display: flex; gap: 6px; padding-top: 6px; }
+.passos span { height: 4px; flex: 1; border-radius: 4px; background: var(--a-line); }
+.passos span.on { background: var(--a-green); }
+.campo { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; background: var(--a-card); border: 1px solid var(--a-line); border-radius: 14px; padding: 10px 14px; }
+.campo > span { grid-column: 1 / -1; font-size: 12px; font-weight: 600; color: var(--a-sub); letter-spacing: .03em; }
+.campo input { border: 0; background: transparent; font: 600 20px var(--f-body); color: var(--a-ink); min-width: 0; width: 100%; padding: 0; }
+.campo input::placeholder { color: #b9bdb4; }
+.campo em { font-style: normal; color: var(--a-sub); }
+.campo input:focus-visible { outline: none; }
+.campo:focus-within { border-color: var(--a-green); box-shadow: 0 0 0 3px var(--a-green-soft); }
+.seg { grid-column: 1 / -1; display: flex; gap: 6px; }
+.seg button { flex: 1; border: 1px solid var(--a-line); background: var(--a-bg); border-radius: 10px; padding: 9px 6px; font-weight: 600; font-size: 14px; color: var(--a-ink); }
+.seg button.on { background: var(--a-green); border-color: var(--a-green); color: #fff; }
+.dica { margin: 0; display: flex; gap: 8px; align-items: center; color: var(--a-green); font-weight: 600; font-size: 14px; }
+.dica::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.rodape { margin-top: auto; padding-top: 6px; display: flex; flex-direction: column; gap: 8px; }
+.btn { width: 100%; border: 0; border-radius: 16px; padding: 15px; background: var(--a-green); color: #fff; font-weight: 700; font-size: 16px; }
+.btn:disabled { background: var(--a-line); color: var(--a-sub); cursor: default; }
+.btn.claro { background: transparent; color: var(--a-ink); border: 1px solid var(--a-line); }
+.opcoes { display: grid; gap: 8px; }
+.opcao { text-align: left; background: var(--a-card); border: 1px solid var(--a-line); border-radius: 14px; padding: 11px 14px; display: grid; grid-template-columns: 20px 1fr; gap: 2px 10px; align-items: center; color: var(--a-ink); }
+.opcao i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--a-line); grid-row: span 2; }
+.opcao.on { border-color: var(--a-green); background: var(--a-green-soft); }
+.opcao.on i { border: 5px solid var(--a-green); }
+.opcao b { font-weight: 600; }
+.opcao small { color: var(--a-sub); grid-column: 2; }
+.rot { margin: 4px 0 -6px; font-size: 13px; font-weight: 700; color: var(--a-sub); letter-spacing: .04em; text-transform: uppercase; }
+.barra { display: flex; align-items: center; gap: 6px; padding-top: 4px; }
+.barra h1 { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 26px; flex: 1; }
+.voltar, .xis { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--a-card); font-size: 24px; line-height: 1; display: grid; place-items: center; color: var(--a-ink); flex: none; }
+
+/* Hoje */
+.topo-hoje { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-top: 4px; }
+.topo-hoje h1 { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 32px; line-height: 1; }
+.data { margin: 4px 0 0; color: var(--a-sub); font-size: 13px; }
+.gems { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--a-gem-soft); color: var(--a-gem); border-radius: 999px; padding: 7px 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gem { width: 12px; height: 12px; background: currentColor; transform: rotate(45deg); border-radius: 2px; display: inline-block; }
+.resumo { background: var(--a-card); border-radius: 20px; padding: 16px; display: grid; gap: 12px; border: 1px solid var(--a-line); }
+.kcal { display: grid; gap: 8px; }
+.kcal .num { font-family: var(--f-disp); font-weight: 800; font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.kcal .num small { font-family: var(--f-body); font-size: 15px; font-weight: 600; color: var(--a-sub); letter-spacing: 0; margin-left: 6px; }
+.trilho { height: 10px; border-radius: 10px; background: var(--a-green-soft); overflow: hidden; }
+.trilho i { display: block; height: 100%; background: var(--a-green); border-radius: 10px; }
+.trilho.coral { height: 6px; background: var(--a-coral-soft); }
+.trilho.coral i { background: var(--a-coral); }
+.kcal .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--a-sub); font-variant-numeric: tabular-nums; }
+.prot { display: grid; gap: 6px; padding-top: 10px; border-top: 1px dashed var(--a-line); }
+.prot p { margin: 0; font-size: 15px; }
+.prot b { color: var(--a-coral); }
+.lista-hoje { display: grid; gap: 8px; }
+.ref { display: flex; align-items: center; gap: 12px; background: var(--a-card); border: 1px solid var(--a-line); border-radius: 16px; padding: 12px 12px 12px 14px; width: 100%; text-align: left; color: var(--a-ink); }
+.ref .tx { flex: 1; min-width: 0; }
+.ref b { display: block; font-weight: 700; }
+.ref small { display: block; color: var(--a-sub); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ref .val { font-weight: 700; font-variant-numeric: tabular-nums; }
+.mais { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 0; background: var(--a-green); color: #fff; font-size: 24px; line-height: 1; display: grid; place-items: center; }
+.missao { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1.5px dashed var(--a-gem); background: transparent; color: var(--a-ink); border-radius: 16px; padding: 12px 14px; font-size: 14px; }
+.missao span { flex: 1; }
+.missao em { font-style: normal; color: var(--a-gem); font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.pro-chip { align-self: flex-end; margin-top: auto; border: 0; border-radius: 14px; padding: 8px 14px; background: var(--a-coral-soft); color: var(--a-coral); text-align: left; line-height: 1.2; }
+.pro-chip b { display: block; font-size: 14px; }
+.pro-chip small { font-size: 11px; color: var(--a-sub); }
+
+/* Busca */
+.adic { display: flex; justify-content: space-between; gap: 8px; background: var(--a-green-soft); border-radius: 14px; padding: 10px 14px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.buscar { display: flex; align-items: center; gap: 8px; background: var(--a-card); border: 1px solid var(--a-line); border-radius: 14px; padding: 0 12px; }
+.buscar:focus-within { border-color: var(--a-green); }
+.buscar svg { flex: none; }
+.buscar input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 13px 0; font: 500 16px var(--f-body); color: var(--a-ink); }
+.buscar input:focus-visible { outline: none; }
+.lista { display: grid; gap: 8px; }
+.grupo { margin: 4px 2px -2px; font-size: 12px; font-weight: 700; color: var(--a-sub); letter-spacing: .05em; text-transform: uppercase; }
+.item { background: var(--a-card); border: 1px solid var(--a-line); border-radius: 16px; overflow: hidden; }
+.item.add { border-color: var(--a-green); }
+.item-top { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 11px 12px 11px 14px; text-align: left; color: var(--a-ink); }
+.item-top .nm { flex: 1; min-width: 0; }
+.item-top b { display: block; font-weight: 600; }
+.item-top small { display: block; color: var(--a-sub); font-size: 13px; font-variant-numeric: tabular-nums; }
+.mk { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; border: 1.5px solid var(--a-green); color: var(--a-green); font-size: 20px; font-weight: 600; }
+.item.add .mk { background: var(--a-green); color: #fff; font-size: 16px; }
+.vazio-b { color: var(--a-sub); padding: 8px 2px; font-size: 14px; }
+.ed { padding: 0 14px 14px; display: grid; gap: 10px; }
+.ed .seg button { padding: 7px; font-size: 13px; }
+.step { display: flex; align-items: center; gap: 10px; }
+.step > button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--a-line); background: var(--a-bg); font-size: 22px; color: var(--a-ink); flex: none; }
+.step .campo-q { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px; border-bottom: 2px solid var(--a-green); padding: 4px 0; }
+.step input { width: 4.2ch; text-align: right; border: 0; background: transparent; font: 700 24px var(--f-disp); color: var(--a-ink); font-variant-numeric: tabular-nums; padding: 0; }
+.step input:focus-visible { outline: none; }
+.step .un { color: var(--a-sub); font-weight: 600; }
+.eq { margin: 0; text-align: center; font-size: 14px; color: var(--a-green); font-weight: 600; }
+.ed-pe { display: flex; justify-content: space-between; align-items: center; }
+.remover { border: 0; background: none; color: var(--a-coral); font-size: 13px; font-weight: 600; padding: 4px 0; }
+.ed-pe span { font-weight: 700; font-variant-numeric: tabular-nums; }
+.fixo { position: sticky; bottom: -24px; background: linear-gradient(transparent, var(--a-bg) 22%); padding-bottom: 24px; margin-bottom: -24px; padding-top: 16px; }
+
+/* Salvo */
+.salvo { justify-content: center; text-align: center; }
+.ok-card { background: var(--a-card); border-radius: 24px; padding: 26px 18px; display: grid; gap: 6px; justify-items: center; border: 1px solid var(--a-line); }
+.check { width: 64px; height: 64px; border-radius: 50%; background: var(--a-green); color: #fff; display: grid; place-items: center; font-size: 32px; margin-bottom: 6px; }
+.ok-card h1 { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 26px; }
+.ok-card .kc { margin: 0; font-family: var(--f-disp); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; }
+.ok-card .itens { margin: 0; color: var(--a-sub); font-size: 13px; }
+.ganho { margin: 8px 0 0; display: inline-flex; align-items: center; gap: 6px; background: var(--a-gem-soft); color: var(--a-gem); border-radius: 999px; padding: 6px 14px; font-weight: 700; }
+.link { border: 0; background: none; color: var(--a-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600; padding: 8px; align-self: center; }
+.salvo .rodape { margin-top: 18px; }
+
+/* Pro */
+.pro .barra h1 { font-size: 28px; }
+.oferta { background: var(--a-card); border-radius: 20px; padding: 18px; display: grid; gap: 4px; text-align: center; border: 1px solid var(--a-line); }
+.oferta small { color: var(--a-coral); font-weight: 700; font-size: 13px; letter-spacing: .03em; }
+.oferta strong { font-family: var(--f-disp); font-weight: 800; font-size: 32px; font-variant-numeric: tabular-nums; }
+.oferta span { color: var(--a-sub); font-size: 13px; }
+.garantia { background: var(--a-green-soft); color: var(--a-green); border-radius: 14px; padding: 12px 14px; font-weight: 700; text-align: center; }
+.beneficios { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.beneficios li { display: flex; gap: 10px; align-items: center; }
+.beneficios li::before { content: "✓"; color: var(--a-green); font-weight: 800; }
+
+/* Folha (sheet) */
+.veu { position: absolute; inset: 0; background: var(--a-dim); display: flex; align-items: flex-end; z-index: 20; }
+.folha { width: 100%; background: var(--a-bg); border-radius: 24px 24px 0 0; padding: 10px 18px 22px; display: grid; gap: 14px; max-height: 88%; overflow-y: auto; }
+.folha::before { content: ""; width: 40px; height: 4px; border-radius: 4px; background: var(--a-line); justify-self: center; }
+.folha h2 { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 22px; }
+.folha p { margin: 0; color: var(--a-sub); line-height: 1.45; }
+.perg { display: grid; gap: 6px; }
+.perg > b { font-size: 14px; }
+
+/* Tour */
+.tour { position: absolute; inset: 0; z-index: 30; }
+.spot { position: absolute; border-radius: 16px; box-shadow: 0 0 0 2000px var(--a-dim); border: 2px solid #8fe3d9; transition: all .25s ease; pointer-events: none; }
+.balao { position: absolute; left: 14px; right: 14px; background: #fff; color: var(--a-ink); border-radius: 18px; padding: 14px 16px 12px; display: grid; gap: 10px; border: 2px solid var(--a-tour); }
+.balao p { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.35; }
+.balao .seta { position: absolute; width: 16px; height: 16px; background: #fff; border: 2px solid var(--a-tour); transform: rotate(45deg); }
+.balao.baixo .seta { top: -9px; border-right: 0; border-bottom: 0; }
+.balao.cima .seta { bottom: -9px; border-left: 0; border-top: 0; }
+.tour-acoes { display: flex; justify-content: space-between; align-items: center; }
+.tour-acoes button { border: 0; background: none; color: var(--a-tour); font-weight: 700; padding: 6px 2px; }
+.tour-acoes button.forte { background: var(--a-tour); color: #fff; border-radius: 999px; padding: 7px 16px; }
+.tour-acoes span { font-size: 13px; color: var(--a-sub); font-variant-numeric: tabular-nums; }
+
+.toast { position: absolute; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: var(--a-ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: all .25s ease; z-index: 40; white-space: nowrap; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast button { border: 0; background: none; color: #8fe3d9; font-weight: 700; margin-left: 8px; pointer-events: auto; }
+
+@media (prefers-reduced-motion: reduce) { .spot, .toast { transition: none; } }
+
+/* ---------- celular de verdade ---------- */
+@media (max-width: 860px) {
+  body { overflow: hidden; }
+  .layout { display: flex; flex-direction: column; padding: 0; gap: 0; height: 100%; }
+  .topo { display: flex; align-items: center; gap: 10px; height: 44px; flex: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--page); }
+  .topo .marca { font-weight: 700; font-size: 13px; flex: 1; min-width: 0; }
+  .topo .cron { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); font-size: 13px; }
+  .celular { height: auto; flex: 1; min-height: 0; aspect-ratio: auto; width: 100%; border-radius: 0; padding: 0; box-shadow: none; background: var(--a-bg); }
+  .status { display: none; }
+  .tela { border-radius: 0; }
+  .scr { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .painel { position: fixed; inset: 0; z-index: 50; background: var(--page); max-height: none; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
+  .painel:not(.aberto) { display: none; }
+  .fechar-painel { display: inline-flex; align-self: flex-end; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="topo">
+    <span class="marca">A3 · Grupo F · protótipo</span>
+    <span class="cron" id="cron-m" hidden></span>
+    <button class="btn-p" id="abrir-painel" type="button">Tarefas</button>
+  </div>
+
+  <aside class="painel" id="painel" aria-label="Painel de avaliação">
+    <button class="btn-p fechar-painel" type="button" id="fechar-painel">Voltar ao protótipo</button>
+    <p class="eyebrow">Engenharia de Usabilidade · A3 · Grupo F</p>
+    <h1>Protótipo navegável</h1>
+    <p class="lede">Redesenho do registro de refeições do Yazio, Alternativa A. Use como um app de verdade. Para avaliar com alguém, escolha uma tarefa: o tempo e os toques são contados sozinhos.</p>
+
+    <div class="rodando" id="rodando" hidden>
+      <span class="t" id="ev-info"></span>
+      <button class="btn-p" type="button" data-ev="concluir">Concluir</button>
+      <button class="btn-p" type="button" data-ev="desistir">Desistiu</button>
+    </div>
+
+    <div class="tarefas" id="tarefas"></div>
+
+    <h2>Resultados</h2>
+    <table class="res"><thead><tr><th>Tarefa</th><th>Tempo</th><th>Toques</th><th>Status</th></tr></thead><tbody id="res-corpo"></tbody></table>
+    <div class="linha-bt">
+      <button class="btn-p" type="button" data-ev="copiar">Copiar resultados</button>
+      <button class="btn-p" type="button" data-ev="limpar">Limpar</button>
+    </div>
+    <textarea id="res-txt" hidden readonly aria-label="Resultados em texto"></textarea>
+
+    <h2>Navegação livre</h2>
+    <div class="linha-bt">
+      <button class="btn-p" type="button" data-ev="reiniciar">Começar do cadastro</button>
+      <button class="btn-p" type="button" data-ev="tour">Ver o tour de novo</button>
+    </div>
+    <p class="nota">Os resultados ficam só neste navegador. Dados nutricionais aproximados (TACO), meta de 2.892 kcal fixa como na v1.0.</p>
+  </aside>
+
+  <main class="celular" id="celular">
+    <div class="status" aria-hidden="true"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="tela" id="app"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </main>
+</div>
+
+<script>
+(function () {
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = n => Math.round(n).toLocaleString('pt-BR');
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const META_KCAL = 2892, META_PROT = 141;
+const NOME = { cafe: 'Café da manhã', almoco: 'Almoço', jantar: 'Jantar' };
+const SALVO = { cafe: 'Café da manhã salvo', almoco: 'Almoço salvo', jantar: 'Jantar salvo' };
+
+// kcal e proteína por 100 g (TACO, aproximado); un = medida caseira de ug gramas
+const FOODS = [
+  { id: 'arroz', nome: 'Arroz branco', d: 'cozido', kcal: 128, prot: 2.5, un: 'colher', uns: 'colheres', f: 1, ug: 20 },
+  { id: 'arrozi', nome: 'Arroz integral', d: 'cozido', kcal: 124, prot: 2.6, un: 'colher', uns: 'colheres', f: 1, ug: 20 },
+  { id: 'feijao', nome: 'Feijão carioca', d: 'cozido', kcal: 76, prot: 4.8, un: 'concha', uns: 'conchas', f: 1, ug: 100 },
+  { id: 'feijaop', nome: 'Feijão preto', d: 'cozido', kcal: 77, prot: 4.5, un: 'concha', uns: 'conchas', f: 1, ug: 100 },
+  { id: 'frango', nome: 'Peito de frango grelhado', kcal: 159, prot: 32, un: 'filé', uns: 'filés', f: 0, ug: 100 },
+  { id: 'bife', nome: 'Bife de alcatra', d: 'grelhado', kcal: 219, prot: 27, un: 'bife', uns: 'bifes', f: 0, ug: 100 },
+  { id: 'ovo', nome: 'Ovo cozido', kcal: 146, prot: 13.3, un: 'unidade', uns: 'unidades', f: 1, ug: 50 },
+  { id: 'salada', nome: 'Salada de alface e tomate', kcal: 15, prot: 1, un: 'pegador', uns: 'pegadores', f: 0, ug: 40 },
+  { id: 'macarrao', nome: 'Macarrão', d: 'cozido', kcal: 158, prot: 5.8, un: 'pegador', uns: 'pegadores', f: 0, ug: 110 },
+  { id: 'batata', nome: 'Batata frita', kcal: 267, prot: 4, un: 'porção', uns: 'porções', f: 1, ug: 100 },
+  { id: 'farofa', nome: 'Farofa', kcal: 406, prot: 2.1, un: 'colher', uns: 'colheres', f: 1, ug: 15 },
+  { id: 'marmita', nome: 'Marmita pronta', d: 'arroz, feijão e frango', kcal: 130, prot: 8.3, un: 'prato', uns: 'pratos', f: 0, ug: 400, prato: true },
+  { id: 'pao', nome: 'Pão francês', kcal: 300, prot: 8, un: 'unidade', uns: 'unidades', f: 1, ug: 50 },
+  { id: 'cafe', nome: 'Café com leite', kcal: 40, prot: 2, un: 'xícara', uns: 'xícaras', f: 1, ug: 150, ml: true },
+  { id: 'banana', nome: 'Banana prata', kcal: 98, prot: 1.3, un: 'unidade', uns: 'unidades', f: 1, ug: 70 },
+  { id: 'iogurte', nome: 'Iogurte natural', kcal: 63, prot: 4, un: 'pote', uns: 'potes', f: 0, ug: 170 },
+];
+const F = Object.fromEntries(FOODS.map(f => [f.id, f]));
+const SUGESTOES = { cafe: ['pao', 'cafe', 'banana', 'ovo', 'iogurte'], almoco: ['arroz', 'feijao', 'frango', 'salada', 'marmita', 'ovo'], jantar: ['arroz', 'feijao', 'bife', 'macarrao', 'salada'] };
+
+const kcalOf = it => F[it.fid].kcal * it.g / 100;
+const protOf = it => F[it.fid].prot * it.g / 100;
+const soma = (a, fn) => a.reduce((s, x) => s + fn(x), 0);
+const unid = it => F[it.fid].ml ? 'ml' : 'g';
+const meia = f => f.f ? 'meia' : 'meio';
+function medida(f, n) { // "6 colheres e meia", "meio prato"
+  n = Math.round(n * 2) / 2;
+  if (n <= 0) return 'menos de ' + meia(f) + ' ' + f.un;
+  const i = Math.floor(n), h = n - i > 0;
+  if (i === 0) return meia(f) + ' ' + f.un;
+  return i + ' ' + (i === 1 ? f.un : f.uns) + (h ? ' e ' + meia(f) : '');
+}
+const qtdTxt = it => { const f = F[it.fid]; return it.mode === 'u' ? medida(f, it.g / f.ug) : fmt(it.g) + ' ' + unid(it); };
+const refTxt = f => f.prato ? `1 prato, ${fmt(f.kcal * f.ug / 100)} kcal` : `100 ${f.ml ? 'ml' : 'g'}, ${fmt(f.kcal)} kcal`;
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+function novoEstado() {
+  return { screen: 's1', perfil: { idade: '', sexo: '', altura: '', peso: '' }, plano: { objetivo: '', alvo: '', atividade: '' },
+    meals: { cafe: [], almoco: [], jantar: [] }, peso: 68, gems: 0, tourDone: false, tour: -1, draft: null, last: null, sheet: null, missao: false, pesoTmp: 68, resp: {} };
+}
+let S = novoEstado();
+
+// ================= telas =================
+const V = {};
+V.s1 = () => { const p = S.perfil; const campo = (k, rot, ph, u, mode) => `
+  <label class="campo"><span>${rot}</span><input id="f-${k}" data-f="perfil.${k}" inputmode="${mode}" placeholder="${ph}" value="${esc(p[k])}" autocomplete="off">${u ? `<em>${u}</em>` : ''}</label>`;
+  return `<div class="scr">
+  <div class="passos" aria-label="Passo 1 de 2"><span class="on"></span><span></span></div>
+  <h1 class="h">Sobre você</h1>
+  <p class="sub">Com isso a gente calcula sua meta do dia.</p>
+  ${campo('idade', 'Idade', '25', 'anos', 'numeric')}
+  <div class="campo"><span>Sexo</span><div class="seg">${['Feminino', 'Masculino'].map(x => `<button type="button" data-act="sexo" data-v="${x}" class="${p.sexo === x ? 'on' : ''}">${x}</button>`).join('')}</div></div>
+  ${campo('altura', 'Altura', '170', 'cm', 'numeric')}
+  ${campo('peso', 'Peso atual', '68', 'kg', 'decimal')}
+  <p class="dica">Tudo bem chutar. Muda depois.</p>
+  <div class="rodape"><button class="btn" type="button" data-act="go" data-to="s2">Próximo</button></div>
+</div>`; };
+
+V.s2 = () => { const p = S.plano;
+  const obj = [['perder', 'Perder peso'], ['manter', 'Manter o peso'], ['ganhar', 'Ganhar massa muscular']];
+  const atv = [['pouco', 'Pouco ativo', 'Fico sentado quase o dia todo'], ['moderado', 'Moderado', 'Treino 1 a 3 vezes na semana'], ['muito', 'Muito ativo', 'Treino 4 vezes ou mais']];
+  return `<div class="scr">
+  <div class="barra"><button class="voltar" type="button" data-act="go" data-to="s1" aria-label="Voltar">‹</button><div class="passos" style="flex:1" aria-label="Passo 2 de 2"><span class="on"></span><span class="on"></span></div></div>
+  <h1 class="h">Seu plano</h1>
+  <p class="rot">Objetivo</p>
+  <div class="opcoes">${obj.map(([k, t]) => `<button type="button" class="opcao ${p.objetivo === k ? 'on' : ''}" data-act="plano" data-k="objetivo" data-v="${k}"><i></i><b>${t}</b></button>`).join('')}</div>
+  <label class="campo"><span>Peso desejado</span><input id="f-alvo" data-f="plano.alvo" inputmode="decimal" placeholder="65" value="${esc(p.alvo)}" autocomplete="off"><em>kg</em></label>
+  <p class="rot">Nível de atividade</p>
+  <div class="opcoes">${atv.map(([k, t, d]) => `<button type="button" class="opcao ${p.atividade === k ? 'on' : ''}" data-act="plano" data-k="atividade" data-v="${k}"><i></i><b>${t}</b><small>${d}</small></button>`).join('')}</div>
+  <div class="rodape"><button class="btn" type="button" data-act="entrar">Ir para o meu dia</button></div>
+</div>`; };
+
+V.hoje = () => {
+  const all = Object.values(S.meals).flat();
+  const k = soma(all, kcalOf), pr = soma(all, protOf);
+  const rest = Math.max(0, META_KCAL - k), faltaP = Math.max(0, META_PROT - pr);
+  const dia = cap(new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }));
+  const linha = m => { const it = S.meals[m]; const kc = soma(it, kcalOf);
+    return `<div class="ref"><div class="tx"><b>${NOME[m]}${it.length ? `, ${fmt(kc)} kcal` : ''}</b><small>${it.length ? it.map(x => F[x.fid].nome).join(', ') : 'Nada registrado ainda'}</small></div>
+      <button class="mais" type="button" data-act="abrirBusca" data-meal="${m}" ${m === 'almoco' ? 'data-t="add-almoco"' : ''} aria-label="Adicionar em ${NOME[m]}">+</button></div>`; };
+  return `<div class="scr">
+  <div class="topo-hoje"><div><h1>Hoje</h1><p class="data">${dia}</p></div>
+    <button class="gems" type="button" data-act="sheet" data-v="gems" data-t="gems" aria-label="${S.gems} diamantes"><span class="gem"></span>${S.gems}</button></div>
+  <section class="resumo">
+    <div class="kcal" data-t="resumo">
+      <div class="num">${fmt(rest)}<small>kcal restantes</small></div>
+      <div class="trilho"><i style="width:${Math.min(100, k / META_KCAL * 100)}%"></i></div>
+      <div class="meta"><span>Comido: ${fmt(k)} kcal</span><span>Meta: ${fmt(META_KCAL)} kcal</span></div>
+    </div>
+    <div class="prot" data-t="proteina"><p>${faltaP > 0 ? `Faltam <b>${fmt(faltaP)} g</b> de proteína` : '<b>Meta de proteína batida</b>'}</p>
+      <div class="trilho coral"><i style="width:${Math.min(100, pr / META_PROT * 100)}%"></i></div></div>
+  </section>
+  <div class="lista-hoje">
+    ${linha('cafe')}${linha('almoco')}${linha('jantar')}
+    <button class="ref" type="button" data-act="sheet" data-v="peso" data-t="peso"><div class="tx"><b>Peso, medido hoje</b><small>Toque para atualizar</small></div><span class="val">${S.peso.toLocaleString('pt-BR')} kg</span></button>
+    ${S.missao ? '' : `<button class="missao" type="button" data-act="sheet" data-v="missao"><span><b>Missão opcional:</b> conte seus hábitos</span><em>+20 <span class="gem"></span></em></button>`}
+  </div>
+  <button class="pro-chip" type="button" data-act="go" data-to="pro"><b>Seja Pro</b><small>promoção até 30/11</small></button>
+</div>`; };
+
+// ---- busca (telas 3 e 4) ----
+function bResumo() { const it = S.draft.items;
+  return `<div class="adic"><span>Adicionados: <b>${it.length}</b></span><span>Total: <b>${fmt(soma(it, kcalOf))} kcal</b></span></div>`; }
+function bBtn() { const n = S.draft.items.length;
+  return `<button class="btn" type="button" data-act="salvar" ${n ? '' : 'disabled'}>${n ? `Salvar (${n})` : 'Escolha um alimento'}</button>`; }
+function linhaItem(f) {
+  const it = S.draft.items.find(x => x.fid === f.id), aberto = it && S.draft.open === f.id;
+  let html = `<div class="item ${it ? 'add' : ''}"><button type="button" class="item-top" data-act="${it ? 'abrirItem' : 'addItem'}" data-id="${f.id}">
+    <span class="nm"><b>${f.nome}</b><small>${it ? `${qtdTxt(it)}, ${fmt(kcalOf(it))} kcal` : (f.d ? f.d + ' · ' : '') + refTxt(f)}</small></span>
+    <span class="mk" aria-hidden="true">${it ? '✓' : '+'}</span></button>`;
+  if (aberto) {
+    const u = it.mode === 'u', n = Math.round(it.g / f.ug * 2) / 2;
+    html += `<div class="ed">
+      <div class="seg"><button type="button" data-act="modo" data-id="${f.id}" data-v="g" class="${u ? '' : 'on'}">${f.ml ? 'Mililitros' : 'Gramas'}</button><button type="button" data-act="modo" data-id="${f.id}" data-v="u" class="${u ? 'on' : ''}">${cap(f.uns)}</button></div>
+      <div class="step"><button type="button" data-act="menos" data-id="${f.id}" aria-label="Diminuir">−</button>
+        <label class="campo-q"><input class="qtd" id="q-${f.id}" data-id="${f.id}" inputmode="decimal" aria-label="Quantidade" value="${u ? n.toLocaleString('pt-BR') : Math.round(it.g)}"><span class="un">${u ? (n === 1 ? f.un : f.uns) : unid(it)}</span></label>
+        <button type="button" data-act="maisQ" data-id="${f.id}" aria-label="Aumentar">+</button></div>
+      <p class="eq">${u ? `Cerca de ${fmt(it.g)} ${unid(it)}` : `Cerca de ${medida(f, it.g / f.ug)}`}</p>
+      <div class="ed-pe"><button type="button" class="remover" data-act="remover" data-id="${f.id}">Tirar da lista</button><span>${fmt(kcalOf(it))} kcal</span></div>
+    </div>`;
+  }
+  return html + '</div>';
+}
+function bLista() {
+  const d = S.draft, q = norm(d.q.trim());
+  const ids = d.items.map(x => x.fid);
+  let out = '';
+  if (ids.length) out += `<p class="grupo">No seu ${d.meal === 'cafe' ? 'café' : NOME[d.meal].toLowerCase()}</p>` + ids.map(id => linhaItem(F[id])).join('');
+  const cand = (q ? FOODS.filter(f => norm(f.nome + ' ' + (f.d || '')).includes(q)) : SUGESTOES[d.meal].map(id => F[id])).filter(f => !ids.includes(f.id));
+  out += `<p class="grupo">${q ? 'Resultados' : 'Mais usados'}</p>`;
+  out += cand.length ? cand.map(linhaItem).join('') : `<p class="vazio-b">Nada encontrado para "${esc(d.q)}". Tente outro nome, como arroz ou frango.</p>`;
+  return out;
+}
+V.busca = () => `<div class="scr">
+  <div class="barra"><button class="voltar" type="button" data-act="cancelBusca" aria-label="Voltar">‹</button><h1>${NOME[S.draft.meal]}</h1></div>
+  <div id="b-resumo">${bResumo()}</div>
+  <label class="buscar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input id="q" type="search" placeholder="Buscar alimento ou prato" value="${esc(S.draft.q)}" autocomplete="off" aria-label="Buscar alimento"></label>
+  <div id="b-lista" class="lista">${bLista()}</div>
+  <div class="rodape fixo" id="b-btn">${bBtn()}</div>
+</div>`;
+
+V.salvo = () => { const m = S.last.meal, it = S.meals[m];
+  return `<div class="scr salvo">
+  <div class="ok-card"><div class="check" aria-hidden="true">✓</div>
+    <h1>${S.last.novo ? SALVO[m] : NOME[m] + ' atualizado'}</h1>
+    <p class="kc">${fmt(soma(it, kcalOf))} kcal</p>
+    <p class="itens">${it.map(x => `${F[x.fid].nome} (${qtdTxt(x)})`).join(', ')}</p>
+    ${S.last.gems ? `<p class="ganho">+${S.last.gems} <span class="gem"></span> por registrar</p>` : ''}
+  </div>
+  <button class="link" type="button" data-act="desfazer">Desfazer</button>
+  <div class="rodape"><button class="btn" type="button" data-act="hojeDeSalvo">Voltar para hoje</button></div>
+</div>`; };
+
+V.pro = () => `<div class="scr pro">
+  <div class="barra"><h1>Seja Pro</h1><button class="xis" type="button" data-act="fecharPro" aria-label="Fechar">✕</button></div>
+  <div class="oferta"><small>PROMOÇÃO ATÉ 30/11</small><strong>R$ 14,90 por mês</strong><span>no plano anual, R$ 178,80 por ano</span></div>
+  <div class="garantia">Nada é cobrado até você confirmar</div>
+  <ul class="beneficios"><li>Receitas com a quantidade em medida caseira</li><li>Metas de proteína por refeição</li><li>Sem anúncios</li></ul>
+  <p class="sub" style="margin:0">Cancele quando quiser, direto no app.</p>
+  <div class="rodape"><button class="btn" type="button" data-act="sheet" data-v="assinar">Assinar</button><button class="btn claro" type="button" data-act="fecharPro">Agora não</button></div>
+</div>`;
+
+// ---- folhas ----
+function folha() {
+  if (!S.sheet) return '';
+  let h = '';
+  if (S.sheet === 'peso') h = `<h2>Atualizar peso</h2><p>Esse é o mesmo peso que aparece em todo o app.</p>
+    <div class="step"><button type="button" data-act="pesoD" data-v="-0.1" aria-label="Diminuir">−</button>
+    <label class="campo-q"><input id="peso-in" inputmode="decimal" aria-label="Peso" value="${S.pesoTmp.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}"><span class="un">kg</span></label>
+    <button type="button" data-act="pesoD" data-v="0.1" aria-label="Aumentar">+</button></div>
+    <button class="btn" type="button" data-act="pesoOk">Salvar peso</button><button class="btn claro" type="button" data-act="fechaSheet">Cancelar</button>`;
+  if (S.sheet === 'gems') h = `<h2>Seus diamantes: ${S.gems}</h2><p>Você ganha 10 a cada refeição registrada e 20 ao completar a missão de hábitos. Eles servem para desbloquear temas e receitas, sem pagar nada.</p><button class="btn" type="button" data-act="fechaSheet">Entendi</button>`;
+  if (S.sheet === 'missao') { const P = [['refeicoes', 'Quantas refeições você faz por dia?', ['2', '3', '4 ou mais']], ['fora', 'Você come fora de casa?', ['Quase nunca', 'Às vezes', 'Quase sempre']], ['agua', 'Quanta água você bebe?', ['Pouca', 'Uns 2 litros', 'Bastante']]];
+    h = `<h2>Conte seus hábitos</h2><p>É opcional. Responda o que quiser e ganhe 20 diamantes.</p>
+    ${P.map(([k, t, o]) => `<div class="perg"><b>${t}</b><div class="seg">${o.map(x => `<button type="button" data-act="resp" data-k="${k}" data-v="${x}" class="${S.resp[k] === x ? 'on' : ''}">${x}</button>`).join('')}</div></div>`).join('')}
+    <button class="btn" type="button" data-act="missaoOk">Enviar</button><button class="btn claro" type="button" data-act="fechaSheet">Agora não</button>`; }
+  if (S.sheet === 'assinar') h = `<h2>Confirmar assinatura?</h2><p>R$ 178,80 por ano, cobrados só depois que você tocar em Confirmar. Dá para cancelar quando quiser.</p>
+    <button class="btn" type="button" data-act="assinarOk">Confirmar</button><button class="btn claro" type="button" data-act="fechaSheet">Voltar</button>`;
+  return `<div class="veu" data-act="veu"><div class="folha" role="dialog" aria-modal="true">${h}</div></div>`;
+}
+
+// ---- tour ----
+const TOUR = [['resumo', 'Aqui você vê quantas calorias ainda pode comer hoje.'], ['add-almoco', 'Toque aqui para adicionar sua refeição.'],
+  ['proteina', 'Aqui você vê quanta proteína ainda falta.'], ['peso', 'Aqui você atualiza seu peso.'], ['gems', 'Você ganha diamantes a cada registro.']];
+function desenhaTour() {
+  const app = $('#app');
+  const velho = $('.tour', app); if (velho) velho.remove();
+  if (S.screen !== 'hoje' || S.tour < 0 || S.sheet) return;
+  const [key, msg] = TOUR[S.tour];
+  const el = app.querySelector(`[data-t="${key}"]`); if (!el) return;
+  el.scrollIntoView({ block: 'nearest' });
+  const ar = app.getBoundingClientRect(), r = el.getBoundingClientRect(), p = 6;
+  const x = r.left - ar.left - p, y = r.top - ar.top - p, w = r.width + 2 * p, h = r.height + 2 * p;
+  const baixo = y + h / 2 < ar.height * 0.55;
+  const setaX = Math.max(18, Math.min(ar.width - 14 * 2 - 34, x + w / 2 - 14 - 8));
+  const d = document.createElement('div'); d.className = 'tour';
+  d.innerHTML = `<div class="spot" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></div>
+    <div class="balao ${baixo ? 'baixo' : 'cima'}" role="dialog" aria-label="Tour, passo ${S.tour + 1} de 5" style="${baixo ? `top:${y + h + 14}px` : `bottom:${ar.height - y + 14}px`}">
+      <span class="seta" style="left:${setaX}px"></span><p>${msg}</p>
+      <div class="tour-acoes"><button type="button" data-act="tourPular">Pular</button><span>${S.tour + 1} de 5</span><button type="button" class="forte" data-act="tourProx">${S.tour === 4 ? 'Começar' : 'Próximo'}</button></div></div>`;
+  app.appendChild(d);
+}
+
+// ================= render =================
+function render() {
+  const app = $('#app');
+  const sc = $('.scr', app);
+  const top = sc && sc.dataset.v === S.screen ? sc.scrollTop : 0;
+  app.innerHTML = V[S.screen]() + folha();
+  const n = $('.scr', app); n.dataset.v = S.screen; n.scrollTop = top;
+  requestAnimationFrame(desenhaTour);
+}
+function parcial() { $('#b-resumo').innerHTML = bResumo(); $('#b-lista').innerHTML = bLista(); $('#b-btn').innerHTML = bBtn(); }
+
+let tt;
+function toast(msg, desfazer) {
+  const t = $('#toast'); t.innerHTML = esc(msg) + (desfazer ? ' <button type="button" id="toast-desf">Desfazer</button>' : '');
+  t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+function setItem(id, g) { const it = S.draft.items.find(x => x.fid === id); if (it) it.g = Math.max(F[id].ug / 2 > 5 ? 5 : 1, Math.round(g)); }
+function entrarHoje() { S.screen = 'hoje'; if (!S.tourDone) S.tour = 0; render(); if (EV.task === 'T1') fimTarefa(true); }
+
+// ================= ações =================
+const A = {
+  go: el => { S.screen = el.dataset.to; render(); },
+  sexo: el => { S.perfil.sexo = el.dataset.v; render(); },
+  plano: el => { S.plano[el.dataset.k] = el.dataset.v; render(); },
+  entrar: () => entrarHoje(),
+  tourProx: () => { S.tour++; if (S.tour > 4) { S.tour = -1; S.tourDone = true; } render(); },
+  tourPular: () => { S.tour = -1; S.tourDone = true; render(); },
+  abrirBusca: el => { const m = el.dataset.meal; S.draft = { meal: m, items: S.meals[m].map(x => ({ ...x })), open: null, q: '' }; S.screen = 'busca'; render(); },
+  cancelBusca: () => { S.draft = null; S.screen = 'hoje'; render(); },
+  addItem: el => { const f = F[el.dataset.id]; S.draft.items.push({ fid: f.id, g: f.prato ? f.ug : 100, mode: f.prato ? 'u' : 'g' }); S.draft.open = f.id; parcial(); },
+  abrirItem: el => { S.draft.open = S.draft.open === el.dataset.id ? null : el.dataset.id; parcial(); },
+  modo: el => { const it = S.draft.items.find(x => x.fid === el.dataset.id), f = F[it.fid]; it.mode = el.dataset.v;
+    if (it.mode === 'u') it.g = Math.max(0.5, Math.round(it.g / f.ug * 2) / 2) * f.ug; parcial(); },
+  maisQ: el => passo(el.dataset.id, 1), menos: el => passo(el.dataset.id, -1),
+  remover: el => { S.draft.items = S.draft.items.filter(x => x.fid !== el.dataset.id); S.draft.open = null; parcial(); },
+  salvar: () => { const m = S.draft.meal, ant = S.meals[m], novo = ant.length === 0;
+    S.meals[m] = S.draft.items.map(x => ({ ...x })); const g = novo ? 10 : 0; S.gems += g;
+    S.last = { meal: m, ant, novo, gems: g }; S.screen = 'salvo'; render();
+    if (EV.task === 'T2' && m === 'almoco') fimTarefa(true); },
+  desfazer: () => { S.meals[S.last.meal] = S.last.ant; S.gems -= S.last.gems; S.screen = 'busca'; render(); toast('Registro desfeito'); },
+  hojeDeSalvo: () => { S.draft = null; S.screen = 'hoje'; render(); },
+  sheet: el => { S.sheet = el.dataset.v; S.pesoTmp = S.peso; render(); },
+  fechaSheet: () => { S.sheet = null; render(); },
+  veu: (el, e) => { if (e.target === el) { S.sheet = null; render(); } },
+  pesoD: el => { S.pesoTmp = Math.round((S.pesoTmp + parseFloat(el.dataset.v)) * 10) / 10; render(); },
+  pesoOk: () => { S.peso = S.pesoTmp; S.sheet = null; render(); toast('Peso atualizado'); },
+  resp: el => { S.resp[el.dataset.k] = el.dataset.v; render(); },
+  missaoOk: () => { S.missao = true; S.gems += 20; S.sheet = null; render(); toast('Missão completa: +20 diamantes'); },
+  fecharPro: () => { S.screen = 'hoje'; S.sheet = null; render(); if (EV.task === 'PRO') fimTarefa(true); },
+  assinarOk: () => { S.sheet = null; S.screen = 'hoje'; render(); toast('Protótipo: nenhuma cobrança feita'); if (EV.task === 'PRO') fimTarefa(false, 'assinou'); },
+};
+function passo(id, dir) {
+  const it = S.draft.items.find(x => x.fid === id), f = F[id];
+  if (it.mode === 'u') it.g = Math.max(0.5, Math.round(it.g / f.ug * 2) / 2 + dir * 0.5) * f.ug;
+  else it.g = Math.max(10, Math.round(it.g / 10) * 10 + dir * 10);
+  parcial();
+}
+
+const app = $('#app');
+app.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (el && A[el.dataset.act]) A[el.dataset.act](el, e); });
+app.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.f) { const [o, k] = t.dataset.f.split('.'); S[o][k] = t.value; if (k === 'peso') { const v = parseFloat(t.value.replace(',', '.')); if (v > 20 && v < 400) S.peso = v; } }
+  if (t.id === 'q') { S.draft.q = t.value; $('#b-lista').innerHTML = bLista(); }
+});
+app.addEventListener('change', e => {
+  const t = e.target;
+  if (t.classList.contains('qtd')) { const it = S.draft.items.find(x => x.fid === t.dataset.id), f = F[it.fid]; const v = parseFloat(t.value.replace(',', '.'));
+    if (v > 0) it.g = it.mode === 'u' ? Math.max(0.5, Math.round(v * 2) / 2) * f.ug : Math.round(v); parcial(); }
+  if (t.id === 'peso-in') { const v = parseFloat(t.value.replace(',', '.')); if (v > 20 && v < 400) S.pesoTmp = Math.round(v * 10) / 10; }
+});
+$('#toast').addEventListener('click', e => { if (e.target.id === 'toast-desf') A.desfazer(); });
+window.addEventListener('resize', () => requestAnimationFrame(desenhaTour));
+
+// ================= avaliação =================
+const TAREFAS = {
+  T1: { nome: 'Criar conta', txt: 'Crie sua conta e chegue à tela Hoje.' },
+  T2: { nome: 'Registrar o almoço', txt: 'Registre o almoço de hoje: arroz e feijão.' },
+  T3: { nome: 'Ver proteína e peso', txt: 'Diga quanta proteína ainda falta hoje e qual é o seu peso. Toque em Concluir quando a pessoa responder.' },
+  PRO: { nome: 'Oferta do Pro', txt: 'Fluxo à parte: abra a oferta do Pro e volte sem assinar.' },
+};
+const CHAVE = 'a3-prototipo-resultados';
+let EV = { task: null, t0: 0, taps: 0 }, RES = [];
+try { RES = JSON.parse(localStorage.getItem(CHAVE)) || []; } catch (e) { RES = []; }
+const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(RES)); } catch (e) {} };
+const mmss = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+
+function preparar(k) {
+  S = novoEstado();
+  if (k === 'T1') return;
+  Object.assign(S.perfil, { idade: '24', sexo: 'Feminino', altura: '165', peso: '68' });
+  Object.assign(S.plano, { objetivo: 'perder', alvo: '63', atividade: 'moderado' });
+  S.tourDone = true; S.screen = 'hoje';
+  if (k === 'T3') { S.meals.almoco = [{ fid: 'arroz', g: 130, mode: 'g' }, { fid: 'feijao', g: 200, mode: 'u' }]; S.gems = 10; }
+}
+function iniciar(k) { preparar(k); if (k === 'T3') { S.tourDone = false; S.tour = 2; } EV = { task: k, t0: Date.now(), taps: 0 }; fecharPainel(); render(); painel(); }
+function fimTarefa(ok, obs) {
+  if (!EV.task) return;
+  RES.push({ k: EV.task, s: Math.round((Date.now() - EV.t0) / 1000), taps: EV.taps, ok, obs: obs || '', h: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) });
+  guardar(); EV.task = null; painel(); setTimeout(() => toast(ok ? 'Tarefa concluída' : 'Tarefa encerrada'), 300);
+}
+$('#celular').addEventListener('click', () => { if (EV.task) EV.taps++; }, true);
+
+function painel() {
+  $('#tarefas').innerHTML = Object.entries(TAREFAS).map(([k, t]) => `<div class="tarefa"><span class="cod">${k === 'PRO' ? 'Pro' : k}</span><div><b>${t.nome}</b><small>${t.txt}</small></div>
+    <button class="btn-p ${EV.task === k ? '' : 'forte'}" type="button" data-task="${k}">${EV.task === k ? 'Recomeçar' : 'Iniciar'}</button></div>`).join('');
+  $('#rodando').hidden = !EV.task; $('#cron-m').hidden = !EV.task;
+  tick();
+  $('#res-corpo').innerHTML = RES.length ? RES.map(r => `<tr><td>${r.k === 'PRO' ? 'Pro' : r.k} <span style="color:var(--muted)">${r.h}</span></td><td>${mmss(r.s)}</td><td>${r.taps}</td><td>${r.ok ? 'concluiu' : (r.obs || 'desistiu')}</td></tr>`).join('')
+    : '<tr><td class="vazio" colspan="4">Nenhuma tarefa rodada ainda.</td></tr>';
+}
+function tick() { if (!EV.task) return; const s = (Date.now() - EV.t0) / 1000, nm = EV.task === 'PRO' ? 'Pro' : EV.task;
+  $('#ev-info').textContent = `${nm} · ${mmss(s)} · ${EV.taps} toques`; $('#cron-m').textContent = `${nm} ${mmss(s)}`; }
+setInterval(tick, 1000);
+
+function fecharPainel() { $('#painel').classList.remove('aberto'); }
+$('#abrir-painel').addEventListener('click', () => { painel(); $('#painel').classList.add('aberto'); });
+$('#fechar-painel').addEventListener('click', fecharPainel);
+$('#painel').addEventListener('click', e => {
+  const t = e.target.closest('[data-task]'); if (t) return iniciar(t.dataset.task);
+  const b = e.target.closest('[data-ev]'); if (!b) return;
+  const v = b.dataset.ev;
+  if (v === 'concluir') fimTarefa(true);
+  if (v === 'desistir') fimTarefa(false);
+  if (v === 'limpar') { RES = []; guardar(); painel(); }
+  if (v === 'reiniciar') { EV.task = null; S = novoEstado(); fecharPainel(); render(); painel(); }
+  if (v === 'tour') { if (S.screen === 's1' || S.screen === 's2') preparar('T2'); S.screen = 'hoje'; S.tourDone = false; S.tour = 0; S.sheet = null; fecharPainel(); render(); }
+  if (v === 'copiar') {
+    const txt = RES.map(r => `${r.k === 'PRO' ? 'Pro' : r.k} (${TAREFAS[r.k].nome}), ${r.h}: ${mmss(r.s)}, ${r.taps} toques, ${r.ok ? 'concluiu' : (r.obs || 'desistiu')}`).join('\n') || 'Sem resultados.';
+    const ta = $('#res-txt'); ta.value = txt;
+    const fb = () => { ta.hidden = false; ta.focus(); ta.select(); };
+    try { navigator.clipboard.writeText(txt).then(() => { b.textContent = 'Copiado'; setTimeout(() => b.textContent = 'Copiar resultados', 1500); }, fb); } catch (e) { fb(); }
+  }
+});
+
+render(); painel();
+})();
+</script>
+</body>
+</html>
