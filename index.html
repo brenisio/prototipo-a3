@@ -34,7 +34,8 @@ img { max-width: 100%; }
 html, body { height: 100%; }
 body { background: var(--page); color: var(--page-fg); font-family: var(--f-body); font-size: 15px; }
 * { box-sizing: border-box; }
-button { font: inherit; color: inherit; cursor: pointer; }
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+input { touch-action: manipulation; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--a-tour); outline-offset: 2px; }
 
 .layout { height: 100%; display: grid; grid-template-columns: minmax(300px, 400px) auto; justify-content: center; align-items: center; gap: 48px;
@@ -72,7 +73,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--a-tour); ou
 .tela { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--a-bg); color: var(--a-ink); border-radius: 0 0 38px 38px; font-family: var(--f-body); }
 
 /* ---------- app ---------- */
-.scr { position: absolute; inset: 0; overflow-y: auto; padding: 8px 18px 24px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
+.scr { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 8px 18px 24px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
 .scr::-webkit-scrollbar { display: none; }
 .h { margin: 0; font-family: var(--f-disp); font-weight: 800; font-size: 30px; letter-spacing: -.01em; }
 .sub { margin: -8px 0 0; color: var(--a-sub); }
@@ -226,10 +227,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--a-tour); ou
 
 /* ---------- celular de verdade ---------- */
 @media (max-width: 860px) {
-  body { overflow: hidden; }
+  html, body { overflow: hidden; overscroll-behavior: none; }
   .layout { display: flex; flex-direction: column; padding: 0; gap: 0; height: 100%; }
-  .topo { display: flex; align-items: center; gap: 10px; height: 44px; flex: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--page); }
-  .topo .marca { font-weight: 700; font-size: 13px; flex: 1; min-width: 0; }
+  .topo { display: flex; align-self: stretch; align-items: center; gap: 10px; height: 40px; flex: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--page); }
+  .topo .marca { font-weight: 700; font-size: 12px; flex: 1; min-width: 0; text-align: left; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topo .btn-p { padding: 5px 12px; }
   .topo .cron { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); font-size: 13px; }
   .celular { height: auto; flex: 1; min-height: 0; aspect-ratio: auto; width: 100%; border-radius: 0; padding: 0; box-shadow: none; background: var(--a-bg); }
   .status { display: none; }
