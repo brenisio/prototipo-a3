@@ -84,6 +84,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--a-tour); ou
 .campo input { border: 0; background: transparent; font: 600 20px var(--f-body); color: var(--a-ink); min-width: 0; width: 100%; padding: 0; }
 .campo input::placeholder { color: #b9bdb4; }
 .campo em { font-style: normal; color: var(--a-sub); }
+.campo.erro { border-color: var(--a-coral); box-shadow: 0 0 0 3px var(--a-coral-soft); }
+.msg { grid-column: 1 / -1; color: var(--a-coral); font-size: 13px; font-weight: 600; }
+.opcoes.erro .opcao { border-color: var(--a-coral); }
 .campo input:focus-visible { outline: none; }
 .campo:focus-within { border-color: var(--a-green); box-shadow: 0 0 0 3px var(--a-green-soft); }
 .seg { grid-column: 1 / -1; display: flex; gap: 6px; }
@@ -333,24 +336,52 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 function novoEstado() {
   return { screen: 's1', perfil: { idade: '', sexo: '', altura: '', peso: '' }, plano: { objetivo: '', alvo: '', atividade: '' },
-    meals: { cafe: [], almoco: [], jantar: [] }, peso: 68, gems: 0, tourDone: false, tour: -1, draft: null, last: null, sheet: null, missao: false, pesoTmp: 68, resp: {} };
+    meals: { cafe: [], almoco: [], jantar: [] }, peso: 68, gems: 0, tourDone: false, tour: -1, draft: null, last: null, sheet: null, missao: false, pesoTmp: 68, resp: {}, erros: {} };
 }
 let S = novoEstado();
 
 // ================= telas =================
 const V = {};
-V.s1 = () => { const p = S.perfil; const campo = (k, rot, ph, u, mode) => `
-  <label class="campo"><span>${rot}</span><input id="f-${k}" data-f="perfil.${k}" inputmode="${mode}" placeholder="${ph}" value="${esc(p[k])}" autocomplete="off">${u ? `<em>${u}</em>` : ''}</label>`;
+// ---- validação dos cadastros ----
+const LIM = { idade: [13, 100, 'anos', 0], altura: [100, 250, 'cm', 0], peso: [30, 300, 'kg', 1], alvo: [30, 300, 'kg', 1] };
+const numero = v => parseFloat(String(v).replace(',', '.'));
+function erroCampo(k, v) {
+  const [min, max, u] = LIM[k];
+  if (String(v).trim() === '') return 'Preencha este campo';
+  const n = numero(v);
+  if (isNaN(n) || n < min || n > max) return `Use um valor entre ${min} e ${max} ${u}`;
+  return '';
+}
+function validarS1() {
+  const e = {}, p = S.perfil;
+  ['idade', 'altura', 'peso'].forEach(k => { const m = erroCampo(k, p[k]); if (m) e[k] = m; });
+  if (!p.sexo) e.sexo = 'Escolha uma opção';
+  return e;
+}
+function validarS2() {
+  const e = {}, p = S.plano;
+  if (!p.objetivo) e.objetivo = 'Escolha seu objetivo';
+  const m = erroCampo('alvo', p.alvo); if (m) e.alvo = m;
+  else if (p.objetivo === 'perder' && numero(p.alvo) >= S.peso) e.alvo = `Para perder peso, use um valor menor que ${S.peso.toLocaleString('pt-BR')} kg`;
+  else if (p.objetivo === 'ganhar' && numero(p.alvo) < S.peso) e.alvo = `Para ganhar massa, use um valor a partir de ${S.peso.toLocaleString('pt-BR')} kg`;
+  if (!p.atividade) e.atividade = 'Escolha seu nível de atividade';
+  return e;
+}
+const msg = k => S.erros[k] ? `<small class="msg" id="m-${k}">${S.erros[k]}</small>` : '';
+function focarErro() { const k = Object.keys(S.erros)[0]; const el = k && ($('#f-' + k) || $('#g-' + k)); if (el) { el.scrollIntoView({ block: 'center' }); if (el.tagName === 'INPUT') el.focus(); } }
+
+V.s1 = () => { const p = S.perfil; const campo = (k, rot, ph, mode) => `
+  <label class="campo ${S.erros[k] ? 'erro' : ''}"><span>${rot}</span><input id="f-${k}" data-f="perfil.${k}" inputmode="${mode}" maxlength="${LIM[k][3] ? 5 : 3}" placeholder="${ph}" value="${esc(p[k])}" autocomplete="off" aria-invalid="${!!S.erros[k]}"><em>${LIM[k][2]}</em>${msg(k)}</label>`;
   return `<div class="scr">
   <div class="passos" aria-label="Passo 1 de 2"><span class="on"></span><span></span></div>
   <h1 class="h">Sobre você</h1>
   <p class="sub">Com isso a gente calcula sua meta do dia.</p>
-  ${campo('idade', 'Idade', '25', 'anos', 'numeric')}
-  <div class="campo"><span>Sexo</span><div class="seg">${['Feminino', 'Masculino'].map(x => `<button type="button" data-act="sexo" data-v="${x}" class="${p.sexo === x ? 'on' : ''}">${x}</button>`).join('')}</div></div>
-  ${campo('altura', 'Altura', '170', 'cm', 'numeric')}
-  ${campo('peso', 'Peso atual', '68', 'kg', 'decimal')}
+  ${campo('idade', 'Idade', '25', 'numeric')}
+  <div class="campo ${S.erros.sexo ? 'erro' : ''}" id="g-sexo"><span>Sexo</span><div class="seg">${['Feminino', 'Masculino'].map(x => `<button type="button" data-act="sexo" data-v="${x}" class="${p.sexo === x ? 'on' : ''}">${x}</button>`).join('')}</div>${msg('sexo')}</div>
+  ${campo('altura', 'Altura', '170', 'numeric')}
+  ${campo('peso', 'Peso atual', '68', 'decimal')}
   <p class="dica">Tudo bem chutar. Muda depois.</p>
-  <div class="rodape"><button class="btn" type="button" data-act="go" data-to="s2">Próximo</button></div>
+  <div class="rodape"><button class="btn" type="button" data-act="proxS1">Próximo</button></div>
 </div>`; };
 
 V.s2 = () => { const p = S.plano;
@@ -360,10 +391,10 @@ V.s2 = () => { const p = S.plano;
   <div class="barra"><button class="voltar" type="button" data-act="go" data-to="s1" aria-label="Voltar">‹</button><div class="passos" style="flex:1" aria-label="Passo 2 de 2"><span class="on"></span><span class="on"></span></div></div>
   <h1 class="h">Seu plano</h1>
   <p class="rot">Objetivo</p>
-  <div class="opcoes">${obj.map(([k, t]) => `<button type="button" class="opcao ${p.objetivo === k ? 'on' : ''}" data-act="plano" data-k="objetivo" data-v="${k}"><i></i><b>${t}</b></button>`).join('')}</div>
-  <label class="campo"><span>Peso desejado</span><input id="f-alvo" data-f="plano.alvo" inputmode="decimal" placeholder="65" value="${esc(p.alvo)}" autocomplete="off"><em>kg</em></label>
+  <div class="opcoes ${S.erros.objetivo ? 'erro' : ''}" id="g-objetivo">${obj.map(([k, t]) => `<button type="button" class="opcao ${p.objetivo === k ? 'on' : ''}" data-act="plano" data-k="objetivo" data-v="${k}"><i></i><b>${t}</b></button>`).join('')}${msg('objetivo')}</div>
+  <label class="campo ${S.erros.alvo ? 'erro' : ''}"><span>Peso desejado</span><input id="f-alvo" data-f="plano.alvo" inputmode="decimal" maxlength="5" placeholder="${S.peso.toLocaleString('pt-BR')}" value="${esc(p.alvo)}" autocomplete="off" aria-invalid="${!!S.erros.alvo}"><em>kg</em>${msg('alvo')}</label>
   <p class="rot">Nível de atividade</p>
-  <div class="opcoes">${atv.map(([k, t, d]) => `<button type="button" class="opcao ${p.atividade === k ? 'on' : ''}" data-act="plano" data-k="atividade" data-v="${k}"><i></i><b>${t}</b><small>${d}</small></button>`).join('')}</div>
+  <div class="opcoes ${S.erros.atividade ? 'erro' : ''}" id="g-atividade">${atv.map(([k, t, d]) => `<button type="button" class="opcao ${p.atividade === k ? 'on' : ''}" data-act="plano" data-k="atividade" data-v="${k}"><i></i><b>${t}</b><small>${d}</small></button>`).join('')}${msg('atividade')}</div>
   <div class="rodape"><button class="btn" type="button" data-act="entrar">Ir para o meu dia</button></div>
 </div>`; };
 
@@ -521,10 +552,12 @@ function entrarHoje() { S.screen = 'hoje'; if (!S.tourDone) S.tour = 0; render()
 
 // ================= ações =================
 const A = {
-  go: el => { S.screen = el.dataset.to; render(); },
-  sexo: el => { S.perfil.sexo = el.dataset.v; render(); },
-  plano: el => { S.plano[el.dataset.k] = el.dataset.v; render(); },
-  entrar: () => entrarHoje(),
+  go: el => { S.erros = {}; S.screen = el.dataset.to; render(); },
+  sexo: el => { S.perfil.sexo = el.dataset.v; delete S.erros.sexo; render(); },
+  plano: el => { S.plano[el.dataset.k] = el.dataset.v; delete S.erros[el.dataset.k]; if (el.dataset.k === 'objetivo') delete S.erros.alvo; render(); },
+  proxS1: () => { S.erros = validarS1(); if (Object.keys(S.erros).length) { render(); return focarErro(); }
+    S.peso = Math.round(numero(S.perfil.peso) * 10) / 10; S.screen = 's2'; render(); },
+  entrar: () => { S.erros = validarS2(); if (Object.keys(S.erros).length) { render(); return focarErro(); } entrarHoje(); },
   tourProx: () => { S.tour++; if (S.tour > 4) { S.tour = -1; S.tourDone = true; } render(); },
   tourPular: () => { S.tour = -1; S.tourDone = true; render(); },
   abrirBusca: el => { const m = el.dataset.meal; S.draft = { meal: m, items: S.meals[m].map(x => ({ ...x })), open: null, q: '' }; S.screen = 'busca'; render(); },
@@ -544,7 +577,7 @@ const A = {
   sheet: el => { S.sheet = el.dataset.v; S.pesoTmp = S.peso; render(); },
   fechaSheet: () => { S.sheet = null; render(); },
   veu: (el, e) => { if (e.target === el) { S.sheet = null; render(); } },
-  pesoD: el => { S.pesoTmp = Math.round((S.pesoTmp + parseFloat(el.dataset.v)) * 10) / 10; render(); },
+  pesoD: el => { S.pesoTmp = Math.min(300, Math.max(30, Math.round((S.pesoTmp + parseFloat(el.dataset.v)) * 10) / 10)); render(); },
   pesoOk: () => { S.peso = S.pesoTmp; S.sheet = null; render(); toast('Peso atualizado'); },
   resp: el => { S.resp[el.dataset.k] = el.dataset.v; render(); },
   missaoOk: () => { S.missao = true; S.gems += 20; S.sheet = null; render(); toast('Missão completa: +20 diamantes'); },
@@ -553,8 +586,8 @@ const A = {
 };
 function passo(id, dir) {
   const it = S.draft.items.find(x => x.fid === id), f = F[id];
-  if (it.mode === 'u') it.g = Math.max(0.5, Math.round(it.g / f.ug * 2) / 2 + dir * 0.5) * f.ug;
-  else it.g = Math.max(10, Math.round(it.g / 10) * 10 + dir * 10);
+  if (it.mode === 'u') it.g = Math.min(20, Math.max(0.5, Math.round(it.g / f.ug * 2) / 2 + dir * 0.5)) * f.ug;
+  else it.g = Math.min(2000, Math.max(10, Math.round(it.g / 10) * 10 + dir * 10));
   parcial();
 }
 
@@ -562,14 +595,26 @@ const app = $('#app');
 app.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (el && A[el.dataset.act]) A[el.dataset.act](el, e); });
 app.addEventListener('input', e => {
   const t = e.target;
-  if (t.dataset.f) { const [o, k] = t.dataset.f.split('.'); S[o][k] = t.value; if (k === 'peso') { const v = parseFloat(t.value.replace(',', '.')); if (v > 20 && v < 400) S.peso = v; } }
+  if (t.dataset.f) {
+    const [o, k] = t.dataset.f.split('.');
+    // só dígitos; peso aceita uma vírgula com uma casa decimal
+    let v = t.value.replace('.', ',');
+    v = LIM[k][3] ? v.replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, '').replace(/^(\d{0,3})\d*(,\d?)?.*$/, '$1$2') : v.replace(/\D/g, '').slice(0, 3);
+    if (v !== t.value) t.value = v;
+    S[o][k] = v;
+    if (S.erros[k]) { delete S.erros[k]; t.removeAttribute('aria-invalid'); const c = t.closest('.campo'); c.classList.remove('erro'); const m = $('#m-' + k); if (m) m.remove(); }
+  }
   if (t.id === 'q') { S.draft.q = t.value; $('#b-lista').innerHTML = bLista(); }
 });
 app.addEventListener('change', e => {
   const t = e.target;
   if (t.classList.contains('qtd')) { const it = S.draft.items.find(x => x.fid === t.dataset.id), f = F[it.fid]; const v = parseFloat(t.value.replace(',', '.'));
-    if (v > 0) it.g = it.mode === 'u' ? Math.max(0.5, Math.round(v * 2) / 2) * f.ug : Math.round(v); parcial(); }
-  if (t.id === 'peso-in') { const v = parseFloat(t.value.replace(',', '.')); if (v > 20 && v < 400) S.pesoTmp = Math.round(v * 10) / 10; }
+    // limites: 5 g a 2 kg, ou meia a 20 medidas caseiras
+    if (v > 0) it.g = it.mode === 'u' ? Math.min(20, Math.max(0.5, Math.round(v * 2) / 2)) * f.ug : Math.min(2000, Math.max(5, Math.round(v)));
+    else toast('Use um número maior que zero');
+    parcial(); }
+  if (t.id === 'peso-in') { const v = numero(t.value);
+    if (v >= 30 && v <= 300) S.pesoTmp = Math.round(v * 10) / 10; else { toast('Use um peso entre 30 e 300 kg'); render(); } }
 });
 $('#toast').addEventListener('click', e => { if (e.target.id === 'toast-desf') A.desfazer(); });
 window.addEventListener('resize', () => requestAnimationFrame(desenhaTour));
